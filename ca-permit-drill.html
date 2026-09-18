@@ -194,6 +194,7 @@
     gap: 12px;
     align-items: baseline;
     margin-bottom: 14px;
+    flex-wrap: wrap;
   }
   .q-num {
     font-size: 12px;
@@ -209,7 +210,31 @@
     line-height: 1.35;
     margin: 0;
     text-wrap: pretty;
+    flex: 1 1 60%;
+    min-width: 0;
   }
+
+  /* per-question tally for this session, top right of the question line */
+  .history {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 9px;
+    border: 1px solid var(--rule-strong);
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    color: var(--ink-faint);
+  }
+  .history.is-new { border-style: dashed; }
+  .history .h-right { color: var(--accent); }
+  .history .h-wrong { color: var(--wrong); }
+  .history .h-sep { color: var(--rule-strong); font-weight: 500; letter-spacing: 0; }
   .options { display: flex; flex-direction: column; gap: 8px; margin-left: 38px; }
   @media (max-width: 480px) { .options { margin-left: 0; } }
 
@@ -283,7 +308,6 @@
     text-transform: uppercase;
     padding: 2px 7px;
     border-radius: 2px;
-    margin-left: auto;
     white-space: nowrap;
   }
   .verdict-tag.ok { background: var(--accent); color: var(--on-accent); }
@@ -597,6 +621,51 @@ let mode = 'draw';
 let current = [];
 let submitted = false;
 
+/* How each question has gone THIS session: cleared on reload, unlike the miss log. */
+const sessionStats = {};
+
+function bumpSession(key, correct) {
+  const st = sessionStats[key] || (sessionStats[key] = { right: 0, wrong: 0 });
+  if (correct) st.right++; else st.wrong++;
+}
+
+function historyBadge(key) {
+  const st = sessionStats[key];
+  const el = document.createElement('span');
+  el.className = 'history';
+  if (!st || st.right + st.wrong === 0) {
+    el.classList.add('is-new');
+    el.textContent = 'New';
+    el.title = 'Not answered yet this session';
+    el.setAttribute('aria-label', 'New this session');
+    return el;
+  }
+  const label = st.right + ' correct, ' + st.wrong + ' incorrect this session';
+  el.title = label;
+  el.setAttribute('aria-label', label);
+  const right = document.createElement('span');
+  right.className = 'h-right';
+  right.textContent = st.right + ' \u2713';
+  const sep = document.createElement('span');
+  sep.className = 'h-sep';
+  sep.textContent = '/';
+  const wrong = document.createElement('span');
+  wrong.className = 'h-wrong';
+  wrong.textContent = st.wrong + ' \u2717';
+  el.append(right, sep, wrong);
+  return el;
+}
+
+function refreshHistoryBadges() {
+  current.forEach((item, qi) => {
+    const existing = document.getElementById('hist' + qi);
+    if (!existing) return;
+    const next = historyBadge(item.key);
+    next.id = 'hist' + qi;
+    existing.replaceWith(next);
+  });
+}
+
 /* key: stable hash of the question text, so the log survives edits to the bank order */
 function keyFor(text) {
   let h = 5381;
@@ -814,7 +883,9 @@ function render() {
     const text = document.createElement('h2');
     text.className = 'q-text';
     text.textContent = item.q;
-    head.append(num, text);
+    const hist = historyBadge(item.key);
+    hist.id = 'hist' + qi;
+    head.append(num, text, hist);
     section.append(head);
 
     const opts = document.createElement('div');
@@ -895,7 +966,10 @@ function grade() {
     section.classList.add('graded');
     const correct = sel === item.correct;
     if (correct) score++;
-    if (sel !== null && recordResult(item, correct)) logChanged = true;
+    if (sel !== null) {
+      bumpSession(item.key, correct);
+      if (recordResult(item, correct)) logChanged = true;
+    }
 
     const tick = document.getElementById('tick' + qi);
     tick.className = 'tick ' + (correct ? 'right' : 'wrong');
@@ -951,6 +1025,7 @@ function grade() {
   });
 
   if (logChanged) persist();
+  refreshHistoryBadges();
   renderMissLog();
   showScore(score);
   submitBtn.disabled = true;
