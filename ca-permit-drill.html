@@ -1,0 +1,959 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+  :root { color-scheme: light dark; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+  body { margin: 0; font: 14px system-ui, -apple-system, "Segoe UI", sans-serif; background: #f6f6f4; }
+  img { max-width: 100%; }
+  [hidden] { display: none !important; }
+</style>
+<title>California Permit Drill</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap">
+<style>
+  :root {
+    --paper: #F4F5F1;
+    --surface: #FFFFFF;
+    --ink: #171D19;
+    --ink-soft: #5A635C;
+    --ink-faint: #8A928B;
+    --rule: #DCDFD7;
+    --rule-strong: #C3C8BC;
+    --accent: #1C6B4C;
+    --accent-soft: #E4EFE8;
+    --on-accent: #FFFFFF;
+    --wrong: #A8281F;
+    --wrong-soft: #F8E7E4;
+    --caution: #8A5A06;
+    --focus: #1C6B4C;
+    --shadow: 0 1px 2px rgba(23,29,25,.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #11150F;
+      --surface: #1A1F1A;
+      --ink: #E9EDE4;
+      --ink-soft: #A3AC9F;
+      --ink-faint: #7C857A;
+      --rule: #2C332B;
+      --rule-strong: #3E463C;
+      --accent: #63C295;
+      --accent-soft: #17301F;
+      --on-accent: #0D1310;
+      --wrong: #F08A7E;
+      --wrong-soft: #351A16;
+      --caution: #E0B15E;
+      --focus: #63C295;
+      --shadow: 0 1px 2px rgba(0,0,0,.4);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #11150F;
+    --surface: #1A1F1A;
+    --ink: #E9EDE4;
+    --ink-soft: #A3AC9F;
+    --ink-faint: #7C857A;
+    --rule: #2C332B;
+    --rule-strong: #3E463C;
+    --accent: #63C295;
+    --accent-soft: #17301F;
+    --on-accent: #0D1310;
+    --wrong: #F08A7E;
+    --wrong-soft: #351A16;
+    --caution: #E0B15E;
+    --focus: #63C295;
+    --shadow: 0 1px 2px rgba(0,0,0,.4);
+  }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Archivo", "Helvetica Neue", Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  * { box-sizing: border-box; }
+
+  .wrap {
+    max-width: 720px;
+    margin: 0 auto;
+    padding-left: 18px;
+    padding-right: 18px;
+    padding-block: 0 140px;
+  }
+
+  /* ---- masthead ---- */
+  .masthead {
+    padding-block: 34px 22px;
+    border-bottom: 2px solid var(--ink);
+  }
+  .eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 10px;
+  }
+  h1 {
+    font-size: clamp(30px, 7vw, 42px);
+    line-height: 1.04;
+    letter-spacing: -.02em;
+    font-weight: 700;
+    margin: 0 0 10px;
+    text-wrap: balance;
+  }
+  .standfirst {
+    font-family: "Newsreader", Georgia, serif;
+    font-size: 17px;
+    line-height: 1.55;
+    color: var(--ink-soft);
+    margin: 0;
+    max-width: 58ch;
+  }
+
+  /* ---- status rail ---- */
+  .rail {
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 20;
+    background: var(--paper);
+    border-bottom: 1px solid var(--rule);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding-block: 11px;
+    flex-wrap: wrap;
+  }
+  .rail-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .ticks { display: flex; gap: 4px; flex: 1; min-width: 120px; }
+  .tick {
+    height: 6px;
+    flex: 1;
+    background: var(--rule);
+    border-radius: 1px;
+    transition: background .18s ease;
+  }
+  .tick.filled { background: var(--accent); }
+  .tick.right  { background: var(--accent); }
+  .tick.wrong  { background: var(--wrong); }
+
+  /* ---- scorecard ---- */
+  .scorecard {
+    margin-top: 22px;
+    border: 2px solid var(--ink);
+    background: var(--surface);
+    padding: 20px 22px;
+    display: flex;
+    gap: 22px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .score-figure {
+    font-size: 46px;
+    font-weight: 700;
+    letter-spacing: -.03em;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .score-figure .of { color: var(--ink-faint); font-size: 26px; }
+  .score-copy { flex: 1; min-width: 200px; }
+  .score-verdict {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0 0 4px;
+  }
+  .score-note {
+    font-family: "Newsreader", Georgia, serif;
+    font-size: 15px;
+    color: var(--ink-soft);
+    margin: 0;
+  }
+  .pass  { color: var(--accent); }
+  .fail  { color: var(--wrong); }
+
+  /* ---- questions ---- */
+  .question {
+    padding-block: 26px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .q-head {
+    display: flex;
+    gap: 12px;
+    align-items: baseline;
+    margin-bottom: 14px;
+  }
+  .q-num {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    color: var(--ink-faint);
+    font-variant-numeric: tabular-nums;
+    min-width: 26px;
+  }
+  .q-text {
+    font-family: "Newsreader", Georgia, serif;
+    font-size: 20px;
+    line-height: 1.35;
+    margin: 0;
+    text-wrap: pretty;
+  }
+  .options { display: flex; flex-direction: column; gap: 8px; margin-left: 38px; }
+  @media (max-width: 480px) { .options { margin-left: 0; } }
+
+  .option {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 11px 13px;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    cursor: pointer;
+    transition: border-color .14s ease, background .14s ease;
+  }
+  .option:hover { border-color: var(--rule-strong); }
+  .option input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .option .letter {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    width: 22px;
+    height: 22px;
+    flex: 0 0 22px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--rule-strong);
+    border-radius: 50%;
+    color: var(--ink-soft);
+    margin-top: 1px;
+  }
+  .option .otext { flex: 1; font-size: 15px; line-height: 1.4; }
+  .option:has(input:checked) {
+    border-color: var(--ink);
+    background: var(--accent-soft);
+  }
+  .option:has(input:checked) .letter {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--on-accent);
+  }
+  .option:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  /* graded states */
+  .graded .option { cursor: default; }
+  .graded .option:hover { border-color: var(--rule); }
+  .option.is-correct {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+  .option.is-correct .letter { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  .option.is-wrong {
+    border-color: var(--wrong);
+    background: var(--wrong-soft);
+  }
+  .option.is-wrong .letter { background: var(--wrong); border-color: var(--wrong); color: var(--surface); }
+  .mark {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    align-self: center;
+    white-space: nowrap;
+  }
+  .mark.ok { color: var(--accent); }
+  .mark.no { color: var(--wrong); }
+
+  .verdict-tag {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 2px;
+    margin-left: auto;
+    white-space: nowrap;
+  }
+  .verdict-tag.ok { background: var(--accent); color: var(--on-accent); }
+  .verdict-tag.no { background: var(--wrong); color: var(--surface); }
+  .verdict-tag.skip { background: var(--caution); color: var(--surface); }
+
+  .explain {
+    margin: 14px 0 0 38px;
+    padding: 13px 15px;
+    border-left: 3px solid var(--accent);
+    background: var(--surface);
+  }
+  @media (max-width: 480px) { .explain { margin-left: 0; } }
+  .explain-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 5px;
+  }
+  .explain p {
+    margin: 0;
+    font-family: "Newsreader", Georgia, serif;
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  .cite {
+    display: block;
+    margin-top: 8px;
+    font-family: "Archivo", sans-serif;
+    font-size: 12px;
+    color: var(--ink-faint);
+    letter-spacing: .01em;
+  }
+
+  /* ---- action bar ---- */
+  .actions {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    z-index: 30;
+    background: var(--surface);
+    border-top: 1px solid var(--rule-strong);
+    padding: 12px 18px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    box-shadow: 0 -2px 10px rgba(23,29,25,.05);
+  }
+  .actions-inner {
+    max-width: 720px;
+    margin: 0 auto;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .count {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-variant-numeric: tabular-nums;
+    flex: 1;
+    min-width: 120px;
+  }
+  button {
+    font-family: "Archivo", sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: .02em;
+    padding: 11px 20px;
+    border-radius: 3px;
+    border: 1px solid var(--ink);
+    cursor: pointer;
+    background: var(--surface);
+    color: var(--ink);
+    transition: transform .1s ease, opacity .14s ease;
+  }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  button:active { transform: translateY(1px); }
+  button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  button[disabled] { opacity: .45; cursor: not-allowed; }
+
+  .misslog {
+    display: flex;
+    align-items: baseline;
+    gap: 8px 14px;
+    flex-wrap: wrap;
+    padding-block: 12px;
+    border-bottom: 1px solid var(--rule);
+    font-size: 12px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--ink-faint);
+    font-variant-numeric: tabular-nums;
+  }
+  .misslog .figure { color: var(--wrong); }
+  .misslog .figure.clear { color: var(--accent); }
+  .misslog .store {
+    margin-left: auto;
+    letter-spacing: .1em;
+    font-weight: 500;
+    text-transform: none;
+    font-size: 11.5px;
+  }
+
+  .footnote {
+    margin-top: 28px;
+    font-size: 12.5px;
+    color: var(--ink-faint);
+    line-height: 1.55;
+  }
+  .footnote a { color: var(--accent); }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; scroll-behavior: auto !important; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="masthead">
+    <p class="eyebrow">DL 600 X · Quick Reference Handbook · 6/2025</p>
+    <h1>California Permit Drill</h1>
+    <p class="standfirst">Ten questions drawn at random from the rules in the California Quick Reference Driver's Handbook. Answer all ten, submit, and every miss shows the correct rule and where it lives in the handbook.</p>
+  </header>
+
+  <div class="rail">
+    <span class="rail-label" id="railLabel">Set 1 · unanswered</span>
+    <div class="ticks" id="ticks"></div>
+  </div>
+
+  <div class="misslog" id="misslog">
+    <span><span class="figure" id="missCount">0</span> to review</span>
+    <span><span class="figure clear" id="clearCount">0</span> cleared</span>
+    <span class="store" id="storeState">Miss log · loading…</span>
+  </div>
+
+  <div id="scorecard" hidden></div>
+
+  <main id="quiz"></main>
+
+  <p class="footnote">Source: <em>California Driver's Handbook — Quick Reference (DL 600 X, English, new 6/2025)</em>, California DMV. The handbook summarizes the Vehicle Code; DMV, law enforcement, and the courts follow the full, exact language at leginfo.legislature.ca.gov. Practice tool only — not a DMV product.</p>
+</div>
+
+<div class="actions">
+  <div class="actions-inner">
+    <span class="count" id="count">0 of 10 answered</span>
+    <button type="button" id="reviewBtn" disabled>Drill my misses</button>
+    <button type="button" id="resetBtn">New 10 questions</button>
+    <button type="button" class="primary" id="submitBtn">Submit answers</button>
+  </div>
+</div>
+
+<script>
+const BANK = [
+  {q:"As a provisional (under-18) driver, when may you not drive during your first 12 months?",o:["Between 11 p.m. and 5 a.m.","Between 10 p.m. and 6 a.m.","Between midnight and 4 a.m.","Between 9 p.m. and 5 a.m."],a:0,cite:"Section 2 — Getting a Driver's License, p. 2"},
+  {q:"A provisional driver may carry passengers under 20 only if accompanied by a licensed California driver at least how old?",o:["25 years old","21 years old","18 years old","30 years old"],a:0,cite:"Section 2 — Minor's Restrictions and Exceptions, p. 2"},
+  {q:"How far before a turn should you begin signaling?",o:["At least 100 feet","At least 50 feet","At least 200 feet","At least 25 feet"],a:0,cite:"Section 3 — Signaling, p. 4"},
+  {q:"Before changing lanes on a freeway, you should signal at least:",o:["Five seconds ahead","Two seconds ahead","One second ahead","Ten seconds ahead"],a:0,cite:"Section 3 — Signaling, p. 4"},
+  {q:"You must dim your high beams within how many feet of a vehicle coming toward you?",o:["500 feet","300 feet","200 feet","1,000 feet"],a:0,cite:"Section 3 — Using Your Headlights, p. 4"},
+  {q:"You must dim your high beams within how many feet of a vehicle you are following?",o:["300 feet","500 feet","150 feet","1,000 feet"],a:0,cite:"Section 3 — Using Your Headlights, p. 4"},
+  {q:"Headlights are required when it is too dark to see a person or vehicle from what distance?",o:["1,000 feet away","500 feet away","300 feet away","100 feet away"],a:0,cite:"Section 3 — Using Your Headlights, p. 4"},
+  {q:"At night, headlights must be on beginning and ending when?",o:["30 minutes after sunset until 30 minutes before sunrise","At sunset until sunrise","One hour after sunset until one hour before sunrise","15 minutes after sunset until sunrise"],a:0,cite:"Section 3 — Using Your Headlights, p. 4"},
+  {q:"If rain, fog, or snow forces you to use your windshield wipers, you must also:",o:["Turn on your low-beam headlights","Turn on your high-beam headlights","Turn on your parking lights","Turn on your emergency flashers"],a:0,cite:"Section 3 — Using Your Headlights, p. 4"},
+  {q:"On a narrow mountain road, you should sound your horn when you cannot see at least:",o:["200 feet ahead","100 feet ahead","500 feet ahead","50 feet ahead"],a:0,cite:"Section 3 — Using Your Horn, p. 4"},
+  {q:"Is it legal to drive using only your parking lights?",o:["No, it is illegal at any time","Yes, on lit city streets","Yes, in fog","Yes, within 30 minutes of sunset"],a:0,cite:"Section 3 — Using Your Headlights, p. 4"},
+  {q:"A broken yellow line next to your driving lane means:",o:["You may pass when it is safe to do so","You may never pass","You may pass only on the right","The road ahead becomes one-way"],a:0,cite:"Section 4 — Lane Markings, p. 6"},
+  {q:"Double solid white lines mean:",o:["Never change lanes across them","You may cross to pass slower traffic","Traffic flows in opposite directions","Parking is permitted on the shoulder"],a:0,cite:"Section 4 — Lane Markings, p. 7"},
+  {q:"On a multilane road, which lane is the Number 1 Lane?",o:["The far-left lane","The far-right lane","The center lane","The lane nearest the shoulder"],a:0,cite:"Section 4 — Choosing a Lane, p. 7"},
+  {q:"How far may you drive in a center left turn lane?",o:["Up to 200 feet","Up to 100 feet","Up to 500 feet","As far as you like, it is a normal lane"],a:0,cite:"Section 4 — Center Left Turn Lanes, p. 9"},
+  {q:"You are driving slowly on a two-lane road where passing is unsafe. You must use a turnout area when how many vehicles are following you?",o:["Five or more","Three or more","Two or more","Ten or more"],a:0,cite:"Section 4 — Turnout Areas or Lanes, p. 9"},
+  {q:"When turning right, you may drive in a bike lane starting how far before the turn?",o:["Within 200 feet of the intersection","Within 50 feet of the intersection","Within 500 feet of the intersection","Never — the bike lane is off limits"],a:0,cite:"Section 4 — Right Turns, p. 11"},
+  {q:"A wide white line showing where to stop before an intersection or crosswalk is called a:",o:["Limit line","Yield line","Safety line","Barrier line"],a:0,cite:"Section 4 — Right Turns, p. 11"},
+  {q:"You are stopped at a red arrow and want to turn right. You may:",o:["Not turn — wait for a green light or green arrow","Turn after a complete stop","Turn if no pedestrians are present","Turn only between 6 a.m. and 9 p.m."],a:0,cite:"Section 4 — Right Turn Against a Red Arrow, p. 11"},
+  {q:"You may turn left against a red light only when turning:",o:["From a one-way street onto a one-way street","From a two-way street onto a one-way street","From any street when no traffic is coming","From a one-way street onto a two-way street"],a:0,cite:"Section 4 — Left Turn Against a Red Light, p. 13"},
+  {q:"In a residential district, you may make a U-turn when no vehicle is approaching within:",o:["200 feet","100 feet","300 feet","50 feet"],a:0,cite:"Section 4 — U-Turn, p. 13"},
+  {q:"You may never make a U-turn when you cannot see clearly for how far in each direction?",o:["200 feet","100 feet","400 feet","50 feet"],a:0,cite:"Section 4 — U-Turn, p. 13"},
+  {q:"U-turns in a business district are:",o:["Allowed only at an intersection or a divided-highway opening","Always allowed","Allowed only after 7 p.m.","Never allowed under any condition"],a:0,cite:"Section 4 — U-Turn, p. 13"},
+  {q:"Which of these is never a legal place for a U-turn?",o:["In front of a fire station","Across a double yellow line","At a green light with no NO U-TURN sign","On a divided highway at a center divider opening"],a:0,cite:"Section 4 — U-Turn, p. 13"},
+  {q:"You may not pass within how many feet of an intersection, bridge, tunnel, or railroad crossing?",o:["100 feet","50 feet","200 feet","300 feet"],a:0,cite:"Section 4 — Passing, p. 17"},
+  {q:"To pass safely, an approaching hill or curve should be at least how far ahead?",o:["One-third of a mile","One mile","500 feet","One-tenth of a mile"],a:0,cite:"Section 4 — Passing, p. 17"},
+  {q:"You may legally pass on the right when:",o:["An open highway has two or more lanes going your direction","The driver ahead is signaling a left turn on a one-lane road","You use the paved shoulder to get around","Traffic ahead is stopped at a light"],a:0,cite:"Section 4 — How to Pass, p. 17"},
+  {q:"When exiting a highway, you should signal how far before your exit?",o:["Five seconds, about 400 feet","Two seconds, about 100 feet","One second, about 50 feet","Ten seconds, about 800 feet"],a:0,cite:"Section 4 — Exiting, p. 16"},
+  {q:"To merge, enter, or exit traffic on a highway you need a gap of about:",o:["A full block, roughly 300 feet","Half a block, roughly 150 feet","Two car lengths","1,000 feet"],a:0,cite:"Section 4 — Crossing or Entering Traffic, p. 16"},
+  {q:"When parallel parking, look for a space that is at least how much longer than your vehicle?",o:["Three feet","One foot","Six feet","Ten feet"],a:0,cite:"Section 4 — Parallel Parking, p. 18"},
+  {q:"After parallel parking, your vehicle must be within what distance of the curb?",o:["18 inches","6 inches","3 feet","24 inches"],a:0,cite:"Section 4 — Parallel Parking, p. 18"},
+  {q:"You park facing downhill next to a curb. Your front wheels should be turned:",o:["Toward the curb","Away from the curb","Straight ahead","Toward the center of the road"],a:0,cite:"Section 4 — Parking on a Hill, p. 19"},
+  {q:"You park facing uphill next to a curb. Your front wheels should be turned:",o:["Away from the curb, then roll back to touch it","Toward the curb","Straight ahead","Sharply into the traffic lane"],a:0,cite:"Section 4 — Parking on a Hill, p. 19"},
+  {q:"You park on a hill where there is no curb. Turn your wheels:",o:["To the right, so the vehicle rolls away from the road's center","To the left, toward the road's center","Straight ahead","It does not matter if the parking brake is set"],a:0,cite:"Section 4 — Parking on a Hill, p. 19"},
+  {q:"A white painted curb means:",o:["Stop only long enough to pick up or drop off passengers","Loading of passengers and freight","Parking for a limited time","No stopping at any time"],a:0,cite:"Section 4 — Parking at Colored Curbs, p. 20"},
+  {q:"A yellow painted curb means:",o:["Load or unload passengers and freight within the posted time","Park for a limited time","Disabled parking only","No stopping, standing, or parking"],a:0,cite:"Section 4 — Parking at Colored Curbs, p. 20"},
+  {q:"A green painted curb means:",o:["Park for a limited time posted on a sign or the curb","Passenger drop-off only","Freight loading only","Emergency vehicles only"],a:0,cite:"Section 4 — Parking at Colored Curbs, p. 20"},
+  {q:"A red painted curb means:",o:["No stopping, standing, or parking","Stop briefly for passengers","Freight loading only","Parking allowed after 6 p.m."],a:0,cite:"Section 4 — Parking at Colored Curbs, p. 20"},
+  {q:"You may not park within how many feet of a fire hydrant?",o:["15 feet","10 feet","20 feet","25 feet"],a:0,cite:"Section 4 — Illegal Parking, p. 20"},
+  {q:"You may not park within how many feet of a marked or unmarked crosswalk?",o:["20 feet","10 feet","30 feet","50 feet"],a:0,cite:"Section 4 — Illegal Parking, p. 20"},
+  {q:"A vehicle left standing on a freeway may be removed after:",o:["Four hours","One hour","24 hours","Ten minutes"],a:0,cite:"Section 4 — Illegal Parking, p. 21"},
+  {q:"During a law enforcement stop, you should first:",o:["Turn on your right turn signal to show you see the officer","Get out of your vehicle","Call a family member","Turn on your high beams"],a:0,cite:"Section 4 — During a Law Enforcement Stop, p. 21"},
+  {q:"Which documents must the driver of a stopped vehicle produce for law enforcement?",o:["Driver's license, proof of insurance, and vehicle registration","Driver's license only","Registration and a utility bill","A passport and insurance card"],a:0,cite:"Section 4 — Your Rights During the Enforcement Stop, p. 22"},
+  {q:"In California, who may ask you about your immigration status during a traffic stop?",o:["Only federal law enforcement officers","Any peace officer","Only a supervising sergeant","City police, but not the CHP"],a:0,cite:"Section 4 — Your Rights During the Enforcement Stop, p. 22"},
+  {q:"When a traffic signal light is completely out, you must:",o:["Stop as if the intersection were controlled by STOP signs in all directions","Proceed without stopping if no one is coming","Treat it as a flashing yellow and slow down","Wait for a law enforcement officer"],a:0,cite:"Section 5 — Traffic Light Not Working, p. 25"},
+  {q:"A flashing red traffic signal light means:",o:["Stop, then go when it is safe","Slow down and proceed with caution","The signal is about to turn green","Stop and wait for a green light"],a:0,cite:"Section 5 — Flashing Red Light, p. 24"},
+  {q:"A flashing yellow traffic signal light means:",o:["Proceed with caution — slow down and be alert","Stop before the limit line","The light is about to turn red","Yield to all cross traffic and stop"],a:0,cite:"Section 5 — Flashing Yellow Light, p. 24"},
+  {q:"A flashing yellow arrow means:",o:["You may turn, but the turn is not protected — yield to oncoming traffic","You have a protected turn","Stop and wait for a green arrow","Turns are prohibited"],a:0,cite:"Section 5 — Flashing Yellow Arrow, p. 25"},
+  {q:"At an intersection with no signs or signals, two vehicles arrive at the same time. Who goes first?",o:["The vehicle on the right","The vehicle on the left","The faster vehicle","The vehicle going straight, always"],a:0,cite:"Section 5 — Intersections, p. 30"},
+  {q:"At a T intersection with no STOP or YIELD signs, who has the right-of-way?",o:["Traffic on the through road","Traffic on the ending road","Whoever signals first","The vehicle turning left"],a:0,cite:"Section 5 — Intersections, p. 30"},
+  {q:"When entering a roundabout you must:",o:["Yield to all traffic already in the roundabout","Stop before entering, always","Enter to the left and travel clockwise","Pass slower vehicles inside the circle"],a:0,cite:"Section 5 — Roundabouts, p. 31"},
+  {q:"Two vehicles meet on a steep, narrow mountain road and neither can pass. Who has the right-of-way?",o:["The vehicle facing uphill; the downhill vehicle backs up","The vehicle facing downhill","The larger vehicle","The vehicle that arrived first"],a:0,cite:"Section 5 — Mountain Roads, p. 32"},
+  {q:"The speed limit at a blind intersection is:",o:["15 mph","25 mph","10 mph","20 mph"],a:0,cite:"Section 5 — Blind Intersections, p. 39"},
+  {q:"The speed limit in an alley is:",o:["15 mph","25 mph","10 mph","20 mph"],a:0,cite:"Section 5 — Alleys, p. 39"},
+  {q:"The speed limit within 100 feet of a railroad crossing where you cannot see 400 feet down the tracks is:",o:["15 mph","25 mph","10 mph","35 mph"],a:0,cite:"Section 5 — Near Railroad or Light Rail Tracks, p. 39"},
+  {q:"When a signal or flagman warns that a train is coming, you must stop at least how far from the nearest track?",o:["15 feet","5 feet","25 feet","50 feet"],a:0,cite:"Section 5 — Near Railroad or Light Rail Tracks, p. 39"},
+  {q:"The speed limit within 500 feet of a school while children are outside or crossing is:",o:["25 mph, and as low as 15 mph in some zones","35 mph","20 mph","30 mph"],a:0,cite:"Section 5 — Around Children, p. 38"},
+  {q:"Unless otherwise posted, the speed limit in a business or residential district is:",o:["25 mph","35 mph","30 mph","20 mph"],a:0,cite:"Section 5 — Business or Residential Districts, p. 40"},
+  {q:"Unless posted otherwise, the maximum speed limit on most California highways is:",o:["65 mph","70 mph","55 mph","75 mph"],a:0,cite:"Section 6 — Manage Your Speed, p. 52"},
+  {q:"On a two-lane undivided highway, and for any vehicle towing a trailer, the maximum speed is:",o:["55 mph","65 mph","60 mph","45 mph"],a:0,cite:"Section 6 — Manage Your Speed, p. 52"},
+  {q:"A school bus ahead is flashing red lights. You must:",o:["Stop from either direction until the lights stop flashing","Slow to 15 mph and pass carefully","Stop only if you are behind the bus","Pass on the left when clear"],a:0,cite:"Section 5 — Around Children, p. 38"},
+  {q:"Failing to stop for a school bus with flashing red lights can cost you:",o:["A fine up to $1,000 and a one-year license suspension","A warning on the first offense","A $100 fine","Two points and nothing more"],a:0,cite:"Section 5 — Around Children, p. 39"},
+  {q:"A school bus with flashing red lights is on the other side of a divided highway. You:",o:["Do not need to stop","Must stop until the lights stop flashing","Must slow to 15 mph","Must pull onto the shoulder"],a:0,cite:"Section 5 — Around Children, p. 39"},
+  {q:"When you cannot change lanes to pass a bicyclist, you must leave at least:",o:["Three feet of clearance","One foot of clearance","Six feet of clearance","Two feet of clearance"],a:0,cite:"Section 5 — Passing a Bicyclist, p. 37"},
+  {q:"A bus, streetcar, or trolley is stopped at a safety zone. You may pass at no more than:",o:["10 mph","15 mph","25 mph","5 mph"],a:0,cite:"Section 5 — Buses, Streetcars, Trolleys, p. 34"},
+  {q:"A safety zone marked on the road is a space where:",o:["Pedestrians wait for buses, streetcars, and trolleys — never drive through it","Vehicles may stop briefly","Bicycles must yield","Emergency vehicles park"],a:0,cite:"Section 5 — Buses, Streetcars, Trolleys, p. 34"},
+  {q:"It is illegal to follow within how many feet of a fire engine, ambulance, or law enforcement vehicle with its siren or lights on?",o:["300 feet","100 feet","500 feet","150 feet"],a:0,cite:"Section 5 — Emergency Vehicles, p. 35"},
+  {q:"An emergency vehicle approaches with siren and lights while you are already in an intersection. You should:",o:["Continue through the intersection, then pull to the right and stop","Stop immediately where you are","Back out of the intersection","Speed up to clear the area entirely"],a:0,cite:"Section 5 — Emergency Vehicles, p. 35"},
+  {q:"At 55 mph, a large truck may need how much distance to stop, compared with about 300 feet for a car?",o:["Up to 400 feet","About the same, 300 feet","Up to 200 feet","Up to 1,000 feet"],a:0,cite:"Section 5 — Braking (Sharing the Road), p. 33"},
+  {q:"If you tow a trailer or drive a truck with three or more axles, you must drive:",o:["In the far-right lane or a lane marked for slower vehicles","In any lane you choose","In the far-left lane","Only on surface streets"],a:0,cite:"Section 5 — Towing, p. 38"},
+  {q:"Sharing a lane with a motorcycle — lane splitting — is:",o:["Legal in California","Illegal in all cases","Legal only on freeways","Legal only below 10 mph"],a:0,cite:"Section 5 — Motorcycles, p. 34"},
+  {q:"Cargo that extends more than four feet beyond your rear bumper must display:",o:["A 12-inch red or fluorescent orange square flag","A white reflector","An orange traffic cone","No marking is required"],a:0,cite:"Section 5 — Other Important Roadway Information, p. 40"},
+  {q:"How far ahead of your vehicle should you scan the road?",o:["At least 10 seconds","At least 3 seconds","At least 30 seconds","One block"],a:0,cite:"Section 6 — Scan Your Surroundings, p. 44"},
+  {q:"What following distance does the handbook recommend to avoid tailgating?",o:["Three seconds","One second","One car length per 10 mph","Five car lengths"],a:0,cite:"Section 6 — Tailgating, p. 44"},
+  {q:"Your vehicle starts to skid. You should:",o:["Ease off the accelerator, stay off the brakes, and steer in the direction of the skid","Brake hard and hold the wheel straight","Pump the accelerator and steer away from the skid","Shift into neutral and brake firmly"],a:0,cite:"Section 6 — Skids, p. 47"},
+  {q:"On packed snow, you should reduce your speed by:",o:["Half","5 to 10 mph","One-quarter","Nothing, if you have snow tires"],a:0,cite:"Section 6 — Slippery Roads, p. 48"},
+  {q:"On ice, your speed should be no more than:",o:["5 mph","15 mph","25 mph","10 mph"],a:0,cite:"Section 6 — Slippery Roads, p. 48"},
+  {q:"On a wet road, reduce your speed by:",o:["5 to 10 mph","Half","20 mph","No reduction is needed"],a:0,cite:"Section 6 — Slippery Roads, p. 48"},
+  {q:"Your vehicle begins to hydroplane. You should:",o:["Slow down gradually and stay off the brakes","Brake firmly and steer hard","Accelerate to regain traction","Turn on cruise control"],a:0,cite:"Section 6 — Hydroplaning, p. 49"},
+  {q:"Which headlights should you use in heavy fog?",o:["Low beams","High beams","Parking lights only","Fog lights only"],a:0,cite:"Section 6 — Fog or Heavy Smoke, p. 50"},
+  {q:"When driving in high winds you should:",o:["Reduce speed and never use cruise control","Use cruise control to hold a steady speed","Drive faster to reduce buffeting","Use high beams to be seen"],a:0,cite:"Section 6 — High Winds, p. 50"},
+  {q:"A child must ride in a rear-facing child passenger restraint system if they are:",o:["Under 2 years old, under 40 pounds, and under 3 feet 4 inches","Under 1 year old only","Under 4 years old regardless of size","Under 6 years old and under 60 pounds"],a:0,cite:"Section 6 — Child Restraint System and Safety Seats, p. 51"},
+  {q:"A child must be secured in a child passenger restraint system in a rear seat until they are:",o:["8 years old or at least 4 feet 9 inches tall","6 years old or 4 feet tall","10 years old or 5 feet tall","12 years old, no exceptions"],a:0,cite:"Section 6 — Child Restraint System and Safety Seats, p. 51"},
+  {q:"How far should you sit from the air bag cover, measured from the center of the steering wheel to your breastbone?",o:["At least 10 inches","At least 4 inches","At least 18 inches","At least 24 inches"],a:0,cite:"Section 6 — Air Bags, p. 52"},
+  {q:"Leaving a child unattended in a vehicle is illegal if the child is:",o:["Six years old or younger, unless supervised by someone at least 12","Under 3 years old","Under 10 years old in all cases","Any age, in all cases"],a:0,cite:"Section 6 — Unattended Children and Pets, p. 52"},
+  {q:"Never driving faster than is safe for current conditions, regardless of the posted limit, is known as:",o:["The Basic Speed Law","The Prima Facie Rule","The Implied Consent Law","The Right-of-Way Rule"],a:0,cite:"Section 6 — Manage Your Speed, p. 52"},
+  {q:"Your wheels drift off the pavement. You should:",o:["Grip the wheel, ease off the gas, brake gently, then steer back on carefully","Brake hard immediately","Turn the wheel sharply back onto the road","Accelerate to climb back onto the pavement"],a:0,cite:"Section 6 — Driving Off the Pavement, p. 53"},
+  {q:"Your vehicle becomes disabled on the freeway. Which number does the handbook say to dial for assistance?",o:["511","311","611","811"],a:0,cite:"Section 6 — If Your Vehicle Becomes Disabled on the Freeway, p. 53"},
+  {q:"Your vehicle stalls on railroad tracks and a train is approaching. You should:",o:["Get out immediately and run diagonally toward the direction the train is coming from, then call 911","Stay in the vehicle and honk","Try to restart the engine until the last moment","Run down the tracks away from the train"],a:0,cite:"Section 6 — Disabled Vehicles on Railroad Tracks, p. 53"},
+  {q:"Wearing a headset or earplugs in both ears while driving is:",o:["Illegal","Legal at any volume","Legal if only music is playing","Legal on freeways only"],a:0,cite:"Section 3 — An Introduction to Driving, p. 3"},
+  {q:"Minors using a cell phone while driving is illegal, with what exception?",o:["Calling for emergency assistance","Hands-free calls to a parent","Texting at a red light","Using speakerphone"],a:0,cite:"Section 6 — Minors and Cell Phones, p. 54"},
+  {q:"It is illegal to drive with a blood alcohol concentration (BAC) of what, if you are 21 or older?",o:["0.08% or higher","0.05% or higher","0.10% or higher","0.01% or higher"],a:0,cite:"Section 7 — Blood Alcohol Concentration (BAC) Limits, p. 56"},
+  {q:"If you are under 21, it is illegal to drive with a BAC of:",o:["0.01% or higher","0.08% or higher","0.04% or higher","0.05% or higher"],a:0,cite:"Section 7 — Blood Alcohol Concentration (BAC) Limits, p. 56"},
+  {q:"The illegal BAC for a driver operating a vehicle that requires a commercial license is:",o:["0.04% or higher","0.08% or higher","0.01% or higher","0.02% or higher"],a:0,cite:"Section 7 — Blood Alcohol Concentration (BAC) Limits, p. 56"},
+  {q:"You refuse an officer's request for a blood or urine test when suspected of DUI. DMV will:",o:["Suspend or revoke your driving privilege for one year","Take no action without a conviction","Issue a warning letter","Suspend your license for 30 days"],a:0,cite:"Section 7 — Alcohol and Drugs, p. 55"},
+  {q:"A DUI conviction stays on your driver record for:",o:["10 years","3 years","5 years","7 years"],a:0,cite:"Section 7 — DUI Convictions, p. 57"},
+  {q:"An open container of alcohol in your vehicle must be kept:",o:["In the trunk or a place where passengers do not sit","In the glove box","Under the driver's seat","Anywhere, as long as the driver is sober"],a:0,cite:"Section 7 — Use or Possession of Alcohol or Cannabis Products, p. 55"},
+  {q:"If you are 13 to 20 and convicted of riding a bicycle under the influence:",o:["Your driving privilege may be suspended or delayed for one year","Nothing happens to your driving privilege","You are fined only","Your bicycle is impounded for 30 days"],a:0,cite:"Section 7 — Alcohol and Drugs, p. 55"},
+  {q:"California's minimum liability insurance must cover at least how much for a single death or injury?",o:["$30,000","$15,000","$60,000","$100,000"],a:0,cite:"Section 8 — Insurance Requirements, p. 58"},
+  {q:"The minimum insurance coverage required for property damage is:",o:["$15,000","$5,000","$30,000","$60,000"],a:0,cite:"Section 8 — Insurance Requirements, p. 58"},
+  {q:"You must report a collision to DMV within 10 days if property damage exceeds:",o:["$1,000","$750","$500","$2,500"],a:0,cite:"Section 8 — Reporting a Collision, p. 59"},
+  {q:"If anyone is injured or killed in a collision, you must report it to law enforcement within:",o:["24 hours","10 days","72 hours","30 days"],a:0,cite:"Section 8 — What to Do if You Are in a Collision, p. 59"},
+  {q:"You are in a collision without proper insurance coverage. Your driving privilege may be suspended for:",o:["Up to four years","30 days","Up to one year","Six months"],a:0,cite:"Section 8 — Driving Without Insurance, p. 58"},
+  {q:"You hit a parked car and cannot find the owner. You must:",o:["Leave a note with your name, phone number, and address, and report it to law enforcement","Drive away — no report is needed for parked cars","Wait exactly one hour, then leave","Report it only if damage exceeds $1,000"],a:0,cite:"Section 8 — What to Do if You Are in a Collision, p. 59"},
+  {q:"After being served notice of an action against your driving privilege, you must request a DMV hearing within:",o:["10 days of being served, or 14 days from the mailing date","30 days","60 days","5 days"],a:0,cite:"Section 5 — Administrative Hearing, p. 43"},
+  {q:"If an unlicensed person is caught driving your vehicle, the vehicle may be impounded for:",o:["30 days","10 days","48 hours","90 days"],a:0,cite:"Section 5 — Evading Law Enforcement, p. 41"},
+  {q:"As a minor with two at-fault collisions or traffic convictions, you:",o:["Cannot drive for 30 days unless a licensed adult at least 25 rides with you","Lose your license for one year","Receive a warning only","Must retake the written test"],a:0,cite:"Section 5 — Maintaining Your Minor's License, p. 42"},
+  {q:"As a minor with three at-fault collisions or convictions, your driving privilege is:",o:["Suspended for six months, with one year of probation","Suspended for 30 days","Revoked permanently","Unaffected until you turn 18"],a:0,cite:"Section 5 — Maintaining Your Minor's License, p. 42"},
+  {q:"Pedestrians using guide dogs or white canes have the right-of-way:",o:["At all times","Only in marked crosswalks","Only at signalized intersections","Only during daylight hours"],a:0,cite:"Section 5 — Pedestrians, p. 32"},
+  {q:"A pedestrian is in the crosswalk and the DON'T WALK signal starts flashing. You must:",o:["Yield and let them finish crossing","Proceed once the signal flashes","Sound your horn to hurry them","Turn behind them immediately"],a:0,cite:"Section 5 — Pedestrian Signals or Signs, p. 25"},
+  {q:"A line of solid white triangles pointing toward you across the road is a:",o:["Yield line","Limit line","Crosswalk marking","Lane-ending marking"],a:0,cite:"Section 4 — Yield Line, p. 7"},
+  {q:"A five-sided (pentagon) sign means:",o:["You are near a school — drive slowly and stop for children in the crosswalk","Railroad crossing ahead","A divided highway begins","No passing zone"],a:0,cite:"Section 5 — Signs, p. 27"},
+  {q:"A diamond-shaped sign warns you of:",o:["Specific road conditions and dangers ahead","A regulatory speed limit","A highway exit number","A pedestrian crossing only"],a:0,cite:"Section 5 — Signs, p. 27"},
+  {q:"A truck carrying a diamond-shaped hazardous load placard must:",o:["Stop before crossing railroad tracks","Drive in the left lane","Travel only at night","Stop at every intersection"],a:0,cite:"Section 5 — Vehicles with Hazardous Loads, p. 38"},
+  {q:"Driving at night you see road reflectors shining red in your headlights. This means:",o:["You are going the wrong way — back out or turn around when safe","A construction zone is ahead","The lane is reserved for carpools","You are approaching a toll plaza"],a:0,cite:"Section 5 — WRONG WAY Sign, p. 26"},
+  {q:"Physicians must report to DMV any patient at least 14 years old with a condition such as:",o:["A lapse of consciousness","Seasonal allergies","Mild nearsightedness","A broken arm"],a:0,cite:"Section 3 — An Introduction to Driving, p. 3"},
+  {q:"An object placed on the windshield may occupy at most what area in the lower corner of the passenger's side?",o:["A 7-inch square","A 5-inch square","A 12-inch square","Any size, if the driver can still see"],a:0,cite:"Section 5 — Other Important Roadway Information, p. 41"},
+  {q:"Vehicles displaying an orange and red triangle are:",o:["Slow-moving vehicles, often traveling 25 mph or less","Oversize loads","Emergency response vehicles","Student driver vehicles"],a:0,cite:"Section 5 — Slow-moving Vehicles, p. 36"},
+  {q:"You must move over and slow down for:",o:["Stationary emergency vehicles and tow trucks displaying flashing amber lights","Any parked vehicle on the shoulder","School buses parked at a school","Vehicles with their hazard lights on in a driveway"],a:0,cite:"Section 5 — Move Over and Slow Down, p. 38"},
+  {q:"Which is a common cause of collisions listed in the handbook?",o:["Driver distractions","Driving with the windows down","Using cruise control on the freeway","Signaling too early for a turn"],a:0,cite:"Section 8 — Causes of Collisions, p. 58"},
+  {q:"Passing a light rail vehicle or streetcar on the left is allowed only when:",o:["The tracks are too close to the right to pass, you are on a one-way street, or an officer directs you","It is stopped at a station","You are traveling under 25 mph","Never — passing on the left is always prohibited"],a:0,cite:"Section 5 — Buses, Streetcars, Trolleys, p. 34"},
+  {q:"An HOV (carpool) lane may be used by:",o:["Motorcycles, unless otherwise posted, and vehicles meeting the posted occupancy","Any vehicle during off-peak hours","Only buses","Any vehicle towing a trailer"],a:0,cite:"Section 4 — Carpool/HOV Lanes, p. 8"},
+  {q:"When entering an HOV lane you must:",o:["Use the designated entrances — never cross double solid lines","Cross wherever traffic allows","Signal for 10 seconds first","Come to a complete stop"],a:0,cite:"Section 4 — Carpool/HOV Lanes, p. 8"}
+];
+
+const SET_SIZE = 10;
+const LETTERS = ['A', 'B', 'C', 'D'];
+const STORE_PATH = 'progress/misses';
+const LOCAL_KEY = 'ca-permit-drill-misslog-v1';
+
+let setNumber = 0;
+let mode = 'draw';
+let current = [];
+let submitted = false;
+
+/* key: stable hash of the question text, so the log survives edits to the bank order */
+function keyFor(text) {
+  let h = 5381;
+  for (let i = 0; i < text.length; i++) h = ((h * 33) ^ text.charCodeAt(i)) >>> 0;
+  return h.toString(36);
+}
+BANK.forEach(item => { item.key = keyFor(item.q); });
+
+/* ---------- miss log: db when the store is reachable, localStorage mirror always ---------- */
+let missLog = {};
+let missDoc = null;
+let writeChain = Promise.resolve();
+
+function readLocal() {
+  try {
+    const raw = localStorage.getItem(LOCAL_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch (e) {
+    return {};
+  }
+}
+
+function writeLocal() {
+  try {
+    localStorage.setItem(LOCAL_KEY, JSON.stringify(missLog));
+  } catch (e) { /* private window or blocked storage — the db copy still carries it */ }
+}
+
+function mergeLogs(a, b) {
+  const out = {};
+  Object.keys(a).concat(Object.keys(b)).forEach(k => {
+    const left = a[k];
+    const right = b[k];
+    if (!left) { out[k] = right; return; }
+    if (!right) { out[k] = left; return; }
+    const newer = (right.updatedAt || 0) >= (left.updatedAt || 0) ? right : left;
+    out[k] = Object.assign({}, newer, { misses: Math.max(left.misses || 0, right.misses || 0) });
+  });
+  return out;
+}
+
+function setStoreLabel(text) {
+  document.getElementById('storeState').textContent = 'Miss log · ' + text;
+}
+
+function toReview() {
+  return Object.keys(missLog).filter(k => missLog[k] && !missLog[k].cleared);
+}
+
+function clearedCount() {
+  return Object.keys(missLog).filter(k => missLog[k] && missLog[k].cleared).length;
+}
+
+function renderMissLog() {
+  const pending = toReview().length;
+  document.getElementById('missCount').textContent = pending;
+  document.getElementById('clearCount').textContent = clearedCount();
+  reviewBtn.disabled = pending === 0;
+  reviewBtn.textContent = pending === 0
+    ? 'Drill my misses'
+    : 'Drill my misses (' + pending + ')';
+}
+
+function persist() {
+  writeLocal();
+  if (!missDoc) return;
+  writeChain = writeChain
+    .then(() => missDoc.set({ items: missLog, updatedAt: Date.now() }))
+    .then(() => setStoreLabel('saved to this artifact'))
+    .catch(err => {
+      missDoc = null;
+      setStoreLabel(err && err.code === 'quota_exceeded' ? 'storage full — this device only' : 'this device only');
+    });
+}
+
+async function connectStore() {
+  missLog = readLocal();
+  renderMissLog();
+  setStoreLabel(Object.keys(missLog).length ? 'this device only' : 'empty');
+
+  let db = null;
+  try {
+    db = await claude.use('db');
+  } catch (e) {
+    db = null;
+  }
+  if (!db) {
+    setStoreLabel('this device only');
+    return;
+  }
+  try {
+    const ref = db.doc(STORE_PATH);
+    const snap = await ref.get();
+    const remote = snap.exists ? (snap.data().items || {}) : {};
+    missLog = mergeLogs(missLog, remote);
+    missDoc = ref;
+    renderMissLog();
+    setStoreLabel('saved to this artifact');
+    if (Object.keys(missLog).length !== Object.keys(remote).length) persist();
+  } catch (e) {
+    setStoreLabel('this device only');
+  }
+}
+
+function recordResult(item, correct) {
+  const existing = missLog[item.key];
+  if (correct) {
+    if (existing && !existing.cleared) {
+      missLog[item.key] = Object.assign({}, existing, { cleared: true, updatedAt: Date.now() });
+      return true;
+    }
+    return false;
+  }
+  missLog[item.key] = {
+    q: item.q,
+    cite: item.cite,
+    misses: (existing && existing.misses ? existing.misses : 0) + 1,
+    cleared: false,
+    updatedAt: Date.now()
+  };
+  return true;
+}
+
+/* ---------- set building ---------- */
+const quizEl = document.getElementById('quiz');
+const ticksEl = document.getElementById('ticks');
+const railLabel = document.getElementById('railLabel');
+const countEl = document.getElementById('count');
+const submitBtn = document.getElementById('submitBtn');
+const resetBtn = document.getElementById('resetBtn');
+const reviewBtn = document.getElementById('reviewBtn');
+const scorecard = document.getElementById('scorecard');
+
+function shuffle(list) {
+  const out = list.slice();
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
+function makeSet(pool) {
+  return shuffle(pool).slice(0, SET_SIZE).map(item => {
+    const correctText = item.o[item.a];
+    const options = shuffle(item.o);
+    return {
+      key: item.key,
+      q: item.q,
+      options,
+      correct: options.indexOf(correctText),
+      correctText,
+      cite: item.cite
+    };
+  });
+}
+
+function render() {
+  quizEl.innerHTML = '';
+  current.forEach((item, qi) => {
+    const section = document.createElement('section');
+    section.className = 'question';
+    section.id = 'q' + qi;
+
+    const head = document.createElement('div');
+    head.className = 'q-head';
+    const num = document.createElement('span');
+    num.className = 'q-num';
+    num.textContent = String(qi + 1).padStart(2, '0');
+    const text = document.createElement('h2');
+    text.className = 'q-text';
+    text.textContent = item.q;
+    head.append(num, text);
+    section.append(head);
+
+    const opts = document.createElement('div');
+    opts.className = 'options';
+    item.options.forEach((opt, oi) => {
+      const label = document.createElement('label');
+      label.className = 'option';
+      label.setAttribute('for', 'q' + qi + 'o' + oi);
+
+      const input = document.createElement('input');
+      input.type = 'radio';
+      input.name = 'q' + qi;
+      input.id = 'q' + qi + 'o' + oi;
+      input.value = String(oi);
+      input.addEventListener('change', () => {
+        if (!submitted) updateProgress();
+      });
+
+      const letter = document.createElement('span');
+      letter.className = 'letter';
+      letter.textContent = LETTERS[oi];
+
+      const otext = document.createElement('span');
+      otext.className = 'otext';
+      otext.textContent = opt;
+
+      label.append(input, letter, otext);
+      opts.append(label);
+    });
+    section.append(opts);
+    quizEl.append(section);
+  });
+
+  ticksEl.innerHTML = '';
+  for (let i = 0; i < current.length; i++) {
+    const tick = document.createElement('span');
+    tick.className = 'tick';
+    tick.id = 'tick' + i;
+    ticksEl.append(tick);
+  }
+  updateProgress();
+}
+
+function selectedIndex(qi) {
+  const picked = document.querySelector('input[name="q' + qi + '"]:checked');
+  return picked ? Number(picked.value) : null;
+}
+
+function setLabel() {
+  return (mode === 'review' ? 'Review ' : 'Set ') + setNumber;
+}
+
+function updateProgress() {
+  let answered = 0;
+  current.forEach((_, qi) => {
+    const sel = selectedIndex(qi);
+    const tick = document.getElementById('tick' + qi);
+    if (sel !== null) {
+      answered++;
+      tick.className = 'tick filled';
+    } else {
+      tick.className = 'tick';
+    }
+  });
+  countEl.textContent = answered + ' of ' + current.length + ' answered';
+  railLabel.textContent = setLabel() + ' · ' + (answered === 0 ? 'unanswered' : answered + '/' + current.length);
+  submitBtn.disabled = answered === 0;
+}
+
+function grade() {
+  submitted = true;
+  let score = 0;
+  let logChanged = false;
+
+  current.forEach((item, qi) => {
+    const sel = selectedIndex(qi);
+    const section = document.getElementById('q' + qi);
+    section.classList.add('graded');
+    const correct = sel === item.correct;
+    if (correct) score++;
+    if (sel !== null && recordResult(item, correct)) logChanged = true;
+
+    const tick = document.getElementById('tick' + qi);
+    tick.className = 'tick ' + (correct ? 'right' : 'wrong');
+
+    const tag = document.createElement('span');
+    tag.className = 'verdict-tag ' + (correct ? 'ok' : sel === null ? 'skip' : 'no');
+    tag.textContent = correct ? 'Correct' : sel === null ? 'Skipped' : 'Incorrect';
+    section.querySelector('.q-head').append(tag);
+
+    section.querySelectorAll('.option').forEach((label, oi) => {
+      const input = label.querySelector('input');
+      input.disabled = true;
+      if (oi === item.correct) {
+        label.classList.add('is-correct');
+        const mark = document.createElement('span');
+        mark.className = 'mark ok';
+        mark.textContent = 'Correct answer';
+        label.append(mark);
+      } else if (oi === sel) {
+        label.classList.add('is-wrong');
+        const mark = document.createElement('span');
+        mark.className = 'mark no';
+        mark.textContent = 'Your answer';
+        label.append(mark);
+      }
+    });
+
+    if (!correct) {
+      const explain = document.createElement('div');
+      explain.className = 'explain';
+      const lbl = document.createElement('p');
+      lbl.className = 'explain-label';
+      lbl.textContent = 'Remember this one';
+      const body = document.createElement('p');
+      body.textContent = item.correctText;
+      const cite = document.createElement('span');
+      cite.className = 'cite';
+      cite.textContent = 'California Driver’s Handbook · ' + item.cite;
+      body.append(cite);
+      explain.append(lbl, body);
+      section.append(explain);
+    }
+  });
+
+  if (logChanged) persist();
+  renderMissLog();
+  showScore(score);
+  submitBtn.disabled = true;
+  countEl.textContent = 'Graded · ' + score + ' of ' + current.length + ' correct';
+  railLabel.textContent = setLabel() + ' · graded';
+  scorecard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function showScore(score) {
+  const total = current.length;
+  const missed = total - score;
+  const passing = score / total >= 0.8;
+  scorecard.hidden = false;
+  scorecard.className = 'scorecard';
+  scorecard.innerHTML = '';
+
+  const fig = document.createElement('div');
+  fig.className = 'score-figure ' + (passing ? 'pass' : 'fail');
+  fig.innerHTML = score + '<span class="of">/' + total + '</span>';
+
+  const copy = document.createElement('div');
+  copy.className = 'score-copy';
+  const verdict = document.createElement('p');
+  verdict.className = 'score-verdict ' + (passing ? 'pass' : 'fail');
+  verdict.textContent = passing
+    ? 'Passing pace — the DMV knowledge test asks for 80 percent correct.'
+    : 'Below the 80 percent the DMV knowledge test asks for.';
+
+  const note = document.createElement('p');
+  note.className = 'score-note';
+  const cleared = mode === 'review' ? score : 0;
+  if (missed === 0) {
+    note.textContent = mode === 'review'
+      ? 'Every question in this review set cleared the miss log.'
+      : 'Clean sweep. Draw a new set and keep the streak going.';
+  } else if (mode === 'review') {
+    note.textContent = cleared + ' cleared from the miss log, ' + missed + ' still in it. The correct rule and its handbook page are below each miss.';
+  } else {
+    note.textContent = 'Scroll down: each of the ' + missed + ' missed question' + (missed === 1 ? '' : 's') + ' shows the correct rule and its place in the handbook, and joins your miss log.';
+  }
+  copy.append(verdict, note);
+
+  scorecard.append(fig, copy);
+}
+
+function startSet(nextMode, pool) {
+  mode = nextMode;
+  setNumber++;
+  submitted = false;
+  current = makeSet(pool);
+  scorecard.hidden = true;
+  scorecard.innerHTML = '';
+  render();
+  submitBtn.disabled = true;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function drawFresh() {
+  startSet('draw', BANK);
+}
+
+function drillMisses() {
+  const pending = toReview();
+  if (!pending.length) return;
+  const pool = BANK.filter(item => pending.indexOf(item.key) !== -1);
+  if (!pool.length) return;
+  startSet('review', pool);
+}
+
+submitBtn.addEventListener('click', () => { if (!submitted) grade(); });
+resetBtn.addEventListener('click', drawFresh);
+reviewBtn.addEventListener('click', drillMisses);
+
+setNumber = 1;
+current = makeSet(BANK);
+render();
+renderMissLog();
+connectStore();
+</script>
+
+</body>
+</html>
