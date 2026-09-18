@@ -366,6 +366,17 @@
   button:active { transform: translateY(1px); }
   button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
   button[disabled] { opacity: .45; cursor: not-allowed; }
+  button.ghost {
+    border-color: var(--rule-strong);
+    color: var(--ink-soft);
+    font-weight: 500;
+  }
+  button.ghost:hover:not([disabled]) { border-color: var(--ink-soft); color: var(--ink); }
+  button.ghost.armed {
+    border-color: var(--wrong);
+    color: var(--wrong);
+    font-weight: 600;
+  }
 
   .misslog {
     display: flex;
@@ -418,8 +429,8 @@
   </div>
 
   <div class="misslog" id="misslog">
-    <span><span class="figure" id="missCount">0</span> to review</span>
-    <span><span class="figure clear" id="clearCount">0</span> cleared</span>
+    <span><span class="figure" id="missCount">0</span> in miss log</span>
+    <span><span class="figure clear" id="clearCount">0</span> answered right since</span>
     <span class="store" id="storeState">Miss log · loading…</span>
   </div>
 
@@ -433,6 +444,7 @@
 <div class="actions">
   <div class="actions-inner">
     <span class="count" id="count">0 of 10 answered</span>
+    <button type="button" class="ghost" id="clearBtn" disabled>Clear miss log</button>
     <button type="button" id="reviewBtn" disabled>Drill my misses</button>
     <button type="button" id="resetBtn">New 10 questions</button>
     <button type="button" class="primary" id="submitBtn">Submit answers</button>
@@ -604,6 +616,18 @@ function writeLocal() {
   } catch (e) { /* private window or blocked storage — the db copy still carries it */ }
 }
 
+/* Entries written before the log became permanent carried `cleared: true`
+   once answered right; read that as one correct repeat. */
+function migrate(log) {
+  Object.keys(log).forEach(k => {
+    const e = log[k];
+    if (!e) { delete log[k]; return; }
+    if (e.rightSince === undefined) e.rightSince = e.cleared ? 1 : 0;
+    delete e.cleared;
+  });
+  return log;
+}
+
 function mergeLogs(a, b) {
   const out = {};
   Object.keys(a).concat(Object.keys(b)).forEach(k => {
@@ -621,22 +645,53 @@ function setStoreLabel(text) {
   document.getElementById('storeState').textContent = 'Miss log · ' + text;
 }
 
-function toReview() {
-  return Object.keys(missLog).filter(k => missLog[k] && !missLog[k].cleared);
+/* Every question you have ever missed stays drillable until you clear the log by hand. */
+function logged() {
+  return Object.keys(missLog).filter(k => missLog[k]);
 }
 
-function clearedCount() {
-  return Object.keys(missLog).filter(k => missLog[k] && missLog[k].cleared).length;
+function recoveredCount() {
+  return logged().filter(k => (missLog[k].rightSince || 0) > 0).length;
 }
 
 function renderMissLog() {
-  const pending = toReview().length;
-  document.getElementById('missCount').textContent = pending;
-  document.getElementById('clearCount').textContent = clearedCount();
-  reviewBtn.disabled = pending === 0;
-  reviewBtn.textContent = pending === 0
+  const total = logged().length;
+  document.getElementById('missCount').textContent = total;
+  document.getElementById('clearCount').textContent = recoveredCount();
+  reviewBtn.disabled = total === 0;
+  reviewBtn.textContent = total === 0
     ? 'Drill my misses'
-    : 'Drill my misses (' + pending + ')';
+    : 'Drill my misses (' + total + ')';
+  if (!clearArmed) {
+    clearBtn.disabled = total === 0;
+    clearBtn.textContent = 'Clear miss log';
+  }
+}
+
+let clearArmed = false;
+let clearTimer = null;
+
+function disarmClear() {
+  clearArmed = false;
+  if (clearTimer) { clearTimeout(clearTimer); clearTimer = null; }
+  clearBtn.classList.remove('armed');
+  renderMissLog();
+}
+
+function handleClear() {
+  const total = logged().length;
+  if (!total) return;
+  if (!clearArmed) {
+    clearArmed = true;
+    clearBtn.classList.add('armed');
+    clearBtn.textContent = 'Erase all ' + total + '? Click again';
+    clearTimer = setTimeout(disarmClear, 6000);
+    return;
+  }
+  disarmClear();
+  missLog = {};
+  persist();
+  renderMissLog();
 }
 
 function persist() {
@@ -652,7 +707,7 @@ function persist() {
 }
 
 async function connectStore() {
-  missLog = readLocal();
+  missLog = migrate(readLocal());
   renderMissLog();
   setStoreLabel(Object.keys(missLog).length ? 'this device only' : 'empty');
 
@@ -670,7 +725,7 @@ async function connectStore() {
     const ref = db.doc(STORE_PATH);
     const snap = await ref.get();
     const remote = snap.exists ? (snap.data().items || {}) : {};
-    missLog = mergeLogs(missLog, remote);
+    missLog = mergeLogs(missLog, migrate(remote));
     missDoc = ref;
     renderMissLog();
     setStoreLabel('saved to this artifact');
@@ -683,17 +738,18 @@ async function connectStore() {
 function recordResult(item, correct) {
   const existing = missLog[item.key];
   if (correct) {
-    if (existing && !existing.cleared) {
-      missLog[item.key] = Object.assign({}, existing, { cleared: true, updatedAt: Date.now() });
-      return true;
-    }
-    return false;
+    if (!existing) return false;
+    missLog[item.key] = Object.assign({}, existing, {
+      rightSince: (existing.rightSince || 0) + 1,
+      updatedAt: Date.now()
+    });
+    return true;
   }
   missLog[item.key] = {
     q: item.q,
     cite: item.cite,
     misses: (existing && existing.misses ? existing.misses : 0) + 1,
-    cleared: false,
+    rightSince: 0,
     updatedAt: Date.now()
   };
   return true;
@@ -707,6 +763,7 @@ const countEl = document.getElementById('count');
 const submitBtn = document.getElementById('submitBtn');
 const resetBtn = document.getElementById('resetBtn');
 const reviewBtn = document.getElementById('reviewBtn');
+const clearBtn = document.getElementById('clearBtn');
 const scorecard = document.getElementById('scorecard');
 
 function shuffle(list) {
@@ -905,13 +962,12 @@ function showScore(score) {
 
   const note = document.createElement('p');
   note.className = 'score-note';
-  const cleared = mode === 'review' ? score : 0;
   if (missed === 0) {
     note.textContent = mode === 'review'
-      ? 'Every question in this review set cleared the miss log.'
+      ? 'Every question in this review set came back right. They stay in the log until you clear it, so you can run them again.'
       : 'Clean sweep. Draw a new set and keep the streak going.';
   } else if (mode === 'review') {
-    note.textContent = cleared + ' cleared from the miss log, ' + missed + ' still in it. The correct rule and its handbook page are below each miss.';
+    note.textContent = score + ' right, ' + missed + ' still wrong. Every question here stays in the log for another pass \u2014 clear it by hand when you are done with them.';
   } else {
     note.textContent = 'Scroll down: each of the ' + missed + ' missed question' + (missed === 1 ? '' : 's') + ' shows the correct rule and its place in the handbook, and joins your miss log.';
   }
@@ -937,7 +993,7 @@ function drawFresh() {
 }
 
 function drillMisses() {
-  const pending = toReview();
+  const pending = logged();
   if (!pending.length) return;
   const pool = BANK.filter(item => pending.indexOf(item.key) !== -1);
   if (!pool.length) return;
@@ -947,6 +1003,7 @@ function drillMisses() {
 submitBtn.addEventListener('click', () => { if (!submitted) grade(); });
 resetBtn.addEventListener('click', drawFresh);
 reviewBtn.addEventListener('click', drillMisses);
+clearBtn.addEventListener('click', handleClear);
 
 setNumber = 1;
 current = makeSet(BANK);
