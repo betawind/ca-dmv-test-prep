@@ -444,6 +444,49 @@
     font-weight: 600;
   }
 
+  .prefs {
+    display: flex;
+    align-items: center;
+    gap: 10px 16px;
+    flex-wrap: wrap;
+    padding-block: 12px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .pref {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .pref input {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+  .pref input:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .pref-note {
+    font-size: 12px;
+    color: var(--ink-faint);
+    font-variant-numeric: tabular-nums;
+  }
+  .pref-error {
+    margin-left: auto;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--wrong);
+    border: 1px solid var(--wrong);
+    border-radius: 2px;
+    padding: 2px 8px;
+  }
+
   .misslog {
     display: flex;
     align-items: baseline;
@@ -492,6 +535,15 @@
   <div class="rail">
     <span class="rail-label" id="railLabel">Set 1 · unanswered</span>
     <div class="ticks" id="ticks"></div>
+  </div>
+
+  <div class="prefs">
+    <label class="pref" for="newOnly">
+      <input type="checkbox" id="newOnly">
+      New questions only
+    </label>
+    <span class="pref-note" id="newOnlyNote"></span>
+    <span class="pref-error" id="prefError" role="alert" hidden>No new questions</span>
   </div>
 
   <div class="misslog" id="misslog">
@@ -875,6 +927,9 @@ const submitBtn = document.getElementById('submitBtn');
 const resetBtn = document.getElementById('resetBtn');
 const reviewBtn = document.getElementById('reviewBtn');
 const clearBtn = document.getElementById('clearBtn');
+const newOnlyEl = document.getElementById('newOnly');
+const newOnlyNote = document.getElementById('newOnlyNote');
+const prefError = document.getElementById('prefError');
 const scorecard = document.getElementById('scorecard');
 
 function shuffle(list) {
@@ -1079,6 +1134,7 @@ function grade() {
   if (logChanged) persist();
   refreshHistoryBadges();
   renderMissLog();
+  updatePrefNote();
   showScore(score);
   submitBtn.disabled = true;
   countEl.textContent = 'Graded · ' + score + ' of ' + current.length + ' correct';
@@ -1134,8 +1190,33 @@ function startSet(nextMode, pool) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+/* "New" means the same thing here as on the NEW pill: not answered yet this session. */
+function unseenPool() {
+  return BANK.filter(item => {
+    const st = sessionStats[item.key];
+    return !st || st.right + st.wrong === 0;
+  });
+}
+
+function updatePrefNote() {
+  const left = unseenPool().length;
+  newOnlyNote.textContent = left === 0
+    ? 'every question answered this session'
+    : left + ' of ' + BANK.length + ' unseen this session';
+}
+
+function setPrefError(on) {
+  prefError.hidden = !on;
+}
+
 function drawFresh() {
-  startSet('draw', BANK);
+  const pool = newOnlyEl.checked ? unseenPool() : BANK;
+  if (!pool.length) {
+    setPrefError(true);
+    return;
+  }
+  setPrefError(false);
+  startSet('draw', pool);
 }
 
 function dropFromLog(key, btn) {
@@ -1163,10 +1244,23 @@ resetBtn.addEventListener('click', drawFresh);
 reviewBtn.addEventListener('click', drillMisses);
 clearBtn.addEventListener('click', handleClear);
 
+const NEWONLY_KEY = 'ca-permit-drill-newonly-v1';
+try {
+  newOnlyEl.checked = localStorage.getItem(NEWONLY_KEY) === '1';
+} catch (e) { /* storage blocked: the box just starts unchecked */ }
+
+newOnlyEl.addEventListener('change', () => {
+  setPrefError(false);
+  try {
+    localStorage.setItem(NEWONLY_KEY, newOnlyEl.checked ? '1' : '0');
+  } catch (e) { /* setting simply will not survive a reload */ }
+});
+
 setNumber = 1;
 current = makeSet(BANK);
 render();
 renderMissLog();
+updatePrefNote();
 connectStore();
 </script>
 
