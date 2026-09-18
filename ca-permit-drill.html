@@ -214,9 +214,42 @@
     min-width: 0;
   }
 
+  /* right-hand column of the question line: tally pill, verdict, drop button */
+  .q-aside {
+    margin-left: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+  }
+  .hist-row { display: flex; align-items: center; gap: 8px; }
+  .drop-btn {
+    font-family: "Archivo", sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border: 1px solid var(--rule-strong);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--ink-soft);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .drop-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .drop-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .dropped {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+
   /* per-question tally for this session, top right of the question line */
   .history {
-    margin-left: auto;
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -885,7 +918,15 @@ function render() {
     text.textContent = item.q;
     const hist = historyBadge(item.key);
     hist.id = 'hist' + qi;
-    head.append(num, text, hist);
+    const histRow = document.createElement('div');
+    histRow.className = 'hist-row';
+    histRow.id = 'histrow' + qi;
+    histRow.append(hist);
+    const aside = document.createElement('div');
+    aside.className = 'q-aside';
+    aside.id = 'aside' + qi;
+    aside.append(histRow);
+    head.append(num, text, aside);
     section.append(head);
 
     const opts = document.createElement('div');
@@ -977,7 +1018,18 @@ function grade() {
     const tag = document.createElement('span');
     tag.className = 'verdict-tag ' + (correct ? 'ok' : sel === null ? 'skip' : 'no');
     tag.textContent = correct ? 'Correct' : sel === null ? 'Skipped' : 'Incorrect';
-    section.querySelector('.q-head').append(tag);
+    document.getElementById('histrow' + qi).append(tag);
+
+    /* Drilling a miss and getting it right is the only moment where dropping
+       one question from the log makes sense, so the control lives only there. */
+    if (mode === 'review' && correct) {
+      const drop = document.createElement('button');
+      drop.type = 'button';
+      drop.className = 'drop-btn';
+      drop.textContent = 'Remove from miss log';
+      drop.addEventListener('click', () => dropFromLog(item.key, drop));
+      document.getElementById('aside' + qi).append(drop);
+    }
 
     section.querySelectorAll('.option').forEach((label, oi) => {
       const input = label.querySelector('input');
@@ -1084,6 +1136,18 @@ function startSet(nextMode, pool) {
 
 function drawFresh() {
   startSet('draw', BANK);
+}
+
+function dropFromLog(key, btn) {
+  if (missLog[key]) {
+    delete missLog[key];
+    persist();
+    renderMissLog();
+  }
+  const done = document.createElement('span');
+  done.className = 'dropped';
+  done.textContent = 'Removed from miss log';
+  btn.replaceWith(done);
 }
 
 function drillMisses() {
