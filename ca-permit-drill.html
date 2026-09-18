@@ -296,6 +296,15 @@
     border-left: 3px solid var(--accent);
     background: var(--surface);
   }
+  .explain.miss { border-left-color: var(--wrong); }
+  .explain.ok { padding: 10px 15px; }
+  .explain .source {
+    margin: 0;
+    font-family: "Archivo", sans-serif;
+    font-size: 13.5px;
+    line-height: 1.45;
+    color: var(--ink-soft);
+  }
   @media (max-width: 480px) { .explain { margin-left: 0; } }
   .explain-label {
     font-size: 11px;
@@ -914,11 +923,21 @@ function grade() {
       }
     });
 
-    if (!correct) {
-      const explain = document.createElement('div');
-      explain.className = 'explain';
-      const lbl = document.createElement('p');
-      lbl.className = 'explain-label';
+    /* Every question carries its handbook location, so a right answer can be
+       checked against the source just as easily as a wrong one. */
+    const explain = document.createElement('div');
+    const lbl = document.createElement('p');
+    lbl.className = 'explain-label';
+
+    if (correct) {
+      explain.className = 'explain ok';
+      lbl.textContent = 'Check it in the handbook';
+      const source = document.createElement('p');
+      source.className = 'source';
+      source.textContent = 'California Driver’s Handbook · ' + item.cite;
+      explain.append(lbl, source);
+    } else {
+      explain.className = 'explain miss';
       lbl.textContent = 'Remember this one';
       const body = document.createElement('p');
       body.textContent = item.correctText;
@@ -927,8 +946,8 @@ function grade() {
       cite.textContent = 'California Driver’s Handbook · ' + item.cite;
       body.append(cite);
       explain.append(lbl, body);
-      section.append(explain);
     }
+    section.append(explain);
   });
 
   if (logChanged) persist();
